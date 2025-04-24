@@ -1,176 +1,151 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>রমজানের সময়সূচি</title>
+    <title>Smart Live HTML Compiler</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/codemirror.min.css" rel="stylesheet">
     <style>
         body {
-            font-family: 'Kalpurush', Arial, sans-serif;
-            text-align: center;
-            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            height: 100vh;
+            background-color: #f0f4f8;
         }
-        h1 {
-            background: #007bff;
+        header {
+            background-color: #1e90ff;
             color: white;
-            padding: 15px;
-            border-radius: 10px;
-            display: inline-block;
+            text-align: center;
+            padding: 15px 0;
+            font-size: 1.8rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
-        .time-box {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-            margin: 10px auto;
-            width: 90%;
-            max-width: 400px;
+        .button-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 10px;
+            background: #fff;
+            border-bottom: 1px solid #ddd;
         }
-        .time-box h2 {
-            margin: 0;
-            font-size: 1.5em;
-            color: #333;
+        .button-bar button {
+            padding: 8px 20px;
+            font-size: 1rem;
+            border: none;
+            background-color: #1e90ff;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
         }
-        .time-box p {
-            margin: 5px 0;
-            font-size: 1.3em;
-            font-weight: bold;
-            color: #007bff;
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            height: 50vh;
+            resize: vertical;
+            overflow: auto;
+            border-bottom: 2px solid #ccc;
+        }
+        .editor-hidden {
+            display: none;
+        }
+        .CodeMirror {
+            height: 100%;
+        }
+        iframe {
+            width: 100%;
+            height: 50vh;
+            border: none;
         }
     </style>
 </head>
 <body>
-    <h1>রমজান ক্যালকুলেটর</h1>
-    <div class="time-box">
-        <h2>আজ কত তম রোজা</h2>
-        <p id="ramadan-day">লোড হচ্ছে...</p>
+    <header>Smart Live HTML Compiler</header>
+
+    <div class="button-bar">
+        <button onclick="activateLive()">Live</button>
+        <button onclick="activateRun()">Run</button>
     </div>
-    <div class="time-box">
-        <h2>বর্তমান সময়</h2>
-        <p id="current-time">লোড হচ্ছে...</p>
+
+    <div class="editor-container" id="editorContainer">
+        <textarea id="codeEditor"></textarea>
     </div>
-    <div class="time-box">
-        <h2>সেহরির শেষ সময়</h2>
-        <p id="sehri-end-time">লোড হচ্ছে...</p>
-    </div>
-    <div class="time-box">
-        <h2>সেহরির বাকি সময়</h2>
-        <p id="sehri-remaining-time">লোড হচ্ছে...</p>
-    </div>
-    <div class="time-box">
-        <h2>ইফতারের সময়</h2>
-        <p id="iftar-time">লোড হচ্ছে...</p>
-    </div>
-    <div class="time-box">
-        <h2>ইফতারের বাকি সময়</h2>
-        <p id="iftar-remaining-time">লোড হচ্ছে...</p>
-    </div>
+    <iframe id="outputFrame"></iframe>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/mode/htmlmixed/htmlmixed.min.js"></script>
 
     <script>
-        const ramadanTimes = {
-    "3-2": { sehri: "05:04 AM", iftar: "06:07 PM", day: 1 },
-    "3-3": { sehri: "05:03 AM", iftar: "06:08 PM", day: 2 },
-    "3-4": { sehri: "05:02 AM", iftar: "06:08 PM", day: 3 },
-    "3-5": { sehri: "05:01 AM", iftar: "06:09 PM", day: 4 },
-    "3-6": { sehri: "05:00 AM", iftar: "06:09 PM", day: 5 },
-    "3-7": { sehri: "04:59 AM", iftar: "06:10 PM", day: 6 },
-    "3-8": { sehri: "04:58 AM", iftar: "06:10 PM", day: 7 },
-    "3-9": { sehri: "04:57 AM", iftar: "06:11 PM", day: 8 },
-    "3-10": { sehri: "04:56 AM", iftar: "06:11 PM", day: 9 },
-    "3-11": { sehri: "04:55 AM", iftar: "06:11 PM", day: 10 },
-    "3-12": { sehri: "04:54 AM", iftar: "06:12 PM", day: 11 },
-    "3-13": { sehri: "04:53 AM", iftar: "06:12 PM", day: 12 },
-    "3-14": { sehri: "04:52 AM", iftar: "06:13 PM", day: 13 },
-    "3-15": { sehri: "04:51 AM", iftar: "06:13 PM", day: 14 },
-    "3-16": { sehri: "04:50 AM", iftar: "06:13 PM", day: 15 },
-    "3-17": { sehri: "04:49 AM", iftar: "06:14 PM", day: 16 },
-    "3-18": { sehri: "04:48 AM", iftar: "06:14 PM", day: 17 },
-    "3-19": { sehri: "04:47 AM", iftar: "06:15 PM", day: 18 },
-    "3-20": { sehri: "04:46 AM", iftar: "06:15 PM", day: 19 },
-    "3-21": { sehri: "04:45 AM", iftar: "06:15 PM", day: 20 },
-    "3-22": { sehri: "04:44 AM", iftar: "06:16 PM", day: 21 },
-    "3-23": { sehri: "04:43 AM", iftar: "06:16 PM", day: 22 },
-    "3-24": { sehri: "04:42 AM", iftar: "06:16 PM", day: 23 },
-    "3-25": { sehri: "04:41 AM", iftar: "06:17 PM", day: 24 },
-    "3-26": { sehri: "04:40 AM", iftar: "06:17 PM", day: 25 },
-    "3-27": { sehri: "04:39 AM", iftar: "06:18 PM", day: 26 },
-    "3-28": { sehri: "04:38 AM", iftar: "06:18 PM", day: 27 },
-    "3-29": { sehri: "04:36 AM", iftar: "06:19 PM", day: 28 },
-    "3-30": { sehri: "04:35 AM", iftar: "06:19 PM", day: 29 },
-    "3-31": { sehri: "04:34 AM", iftar: "06:20 PM", day: 30 }
-};
+        const codeEditor = CodeMirror.fromTextArea(document.getElementById('codeEditor'), {
+            mode: 'htmlmixed',
+            lineNumbers: true,
+            theme: 'default',
+            lineWrapping: true
+        });
 
+        const outputFrame = document.getElementById('outputFrame');
+        const editorContainer = document.getElementById('editorContainer');
 
-        function convertToBanglaDigits(number) {
-            const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-            return number.toString().replace(/\d/g, digit => banglaDigits[digit]);
+        let isLive = true;
+
+        function debounce(fn, delay) {
+            let timer;
+            return function(...args) {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn.apply(this, args), delay);
+            };
         }
 
-        function convertToBanglaTime(timeStr) {
-            const parts = timeStr.split(/[: ]/);
-            return `${convertToBanglaDigits(parts[0])}:${convertToBanglaDigits(parts[1])} ${parts[2]}`;
+        const updateOutput = () => {
+            const code = codeEditor.getValue();
+            const iframeDoc = outputFrame.contentDocument || outputFrame.contentWindow.document;
+            iframeDoc.open();
+            iframeDoc.write(code);
+            iframeDoc.close();
+        };
+
+        codeEditor.on('change', debounce(() => {
+            if (isLive) updateOutput();
+        }, 300));
+
+        function activateLive() {
+            isLive = true;
+            editorContainer.classList.remove('editor-hidden');
+            editorContainer.style.height = "50vh";
+            outputFrame.style.height = "50vh";
+            updateOutput();
         }
 
-        function getTimeObject(timeStr) {
-            const now = new Date();
-            const parts = timeStr.split(/[: ]/);
-            const hours = parseInt(parts[0]) + (parts[2] === "PM" ? 12 : 0);
-            const minutes = parseInt(parts[1]);
-            return new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
+        function activateRun() {
+            isLive = false;
+            editorContainer.classList.add('editor-hidden');
+            outputFrame.style.height = "calc(100vh - 107px)";
+            updateOutput();
         }
 
-        function updateTime() {
-            const now = new Date();
-            document.getElementById('current-time').innerText = now.toLocaleTimeString('bn-BD', {
-                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
-            });
-
-            const monthDay = `${now.getMonth() + 1}-${now.getDate()}`;
-            const todayTimes = ramadanTimes[monthDay];
-
-            if (todayTimes) {
-                document.getElementById('sehri-end-time').innerText = convertToBanglaTime(todayTimes.sehri);
-                document.getElementById('iftar-time').innerText = convertToBanglaTime(todayTimes.iftar);
-
-                const sehriTime = getTimeObject(todayTimes.sehri);
-                const iftarTime = getTimeObject(todayTimes.iftar);
-
-               if (now >= sehriTime && now < iftarTime) {
-    document.getElementById('ramadan-day').innerText = `${convertToBanglaDigits(todayTimes.day)} তম রোজা`;
-} else if (now >= iftarTime && now.getHours() < 24) {
-    document.getElementById('ramadan-day').innerText = `তারাবি চলছে, আজ ${convertToBanglaDigits(todayTimes.day)} তম রোজা`;
-} else {
-    document.getElementById('ramadan-day').innerText = `তারাবি চলছে, আগামীকাল ${convertToBanglaDigits(todayTimes.day + 1)} তম রোজা`;
-}
-
-
-                updateRemainingTime(todayTimes.sehri, 'sehri-remaining-time', "সেহরির সময় শেষ");
-                updateRemainingTime(todayTimes.iftar, 'iftar-remaining-time', "ইফতারের সময় হয়েছে!");
-            } else {
-                document.getElementById('ramadan-day').innerText = "রমজান চলছে না";
-            }
-        }
-
-        function updateRemainingTime(targetTime, elementId, expiredMessage) {
-            const now = new Date();
-            const targetDate = getTimeObject(targetTime);
-            const difference = targetDate - now;
-
-            if (difference <= 0) {
-                document.getElementById(elementId).innerText = expiredMessage;
-            } else {
-                const hours = Math.floor(difference / (1000 * 60 * 60));
-                const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-                document.getElementById(elementId).innerText =
-                    `${convertToBanglaDigits(hours)} ঘণ্টা ${convertToBanglaDigits(minutes)} মিনিট ${convertToBanglaDigits(seconds)} সেকেন্ড`;
-            }
-        }
-
-        setInterval(updateTime, 1000);
-        updateTime();
+        codeEditor.setValue(`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Preview</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { color: #1e90ff; }
+    </style>
+</head>
+<body>
+    <h1>Hello, World!</h1>
+    <p>Start writing your code here...</p>
+</body>
+</html>`);
+        updateOutput();
     </script>
 </body>
 </html>
